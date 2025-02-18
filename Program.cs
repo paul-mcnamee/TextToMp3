@@ -17,9 +17,13 @@ class TextToMp3
         {
             if (synth != null)
             {
-                //set some settings
-                synth.Volume = (int)PromptVolume.Default;
-                synth.Rate = (int)PromptRate.Fast;
+                // Volume can be 0 - 100
+                // https://learn.microsoft.com/en-us/dotnet/api/system.speech.synthesis.speechsynthesizer.volume?view=net-9.0-pp
+                synth.Volume = 100;
+
+                // Rate can be -10 - 10
+                // https://learn.microsoft.com/en-us/dotnet/api/system.speech.synthesis.speechsynthesizer.rate?view=net-9.0-pp
+                synth.Rate = 5;
                 synth.SelectVoiceByHints(VoiceGender.Female, VoiceAge.Adult);
 
                 // Read the JSON file content
@@ -35,14 +39,15 @@ class TextToMp3
                     foreach ( var pair in dict )
                     {
                         Console.WriteLine(pair.Key + ":" + pair.Value);
-                        //save to memory stream
+                        
+                        // Save to a memory stream
                         MemoryStream ms = new MemoryStream();
                         synth.SetOutputToWaveStream(ms);
-
-                        //do speaking
+                        
+                        // Speak the given string value
                         synth.Speak(pair.Value);
 
-                        //now convert to mp3 using LameEncoder or shell out to audiograbber
+                        // Convert to mp3 using LameEncoder or shell out to audiograbber
                         ConvertWavStreamToMp3File(ref ms, pair.Key);
                     }
                 }
@@ -52,13 +57,14 @@ class TextToMp3
 
     public static void ConvertWavStreamToMp3File(ref MemoryStream ms, string savetofilename)
     {
-        //rewind to beginning of stream
+        // Seek to the beginning of the stream
         ms.Seek(0, SeekOrigin.Begin);
 
         using (var retMs = new MemoryStream())
         using (var rdr = new WaveFileReader(ms))
         using (var wtr = new LameMP3FileWriter(savetofilename, rdr.WaveFormat, LAMEPreset.VBR_90))
         {
+            // Copy the wav stream to mp3
             rdr.CopyTo(wtr);
         }
     }
